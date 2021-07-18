@@ -1,9 +1,6 @@
 #! /usr/bin/env python3
-
 import rospy
-
 import actionlib
-
 import action_server.msg
 
 class FrontDockingAction(object):
@@ -41,7 +38,6 @@ class FrontDockingAction(object):
             self._feedback.sequence.append(self._feedback.sequence[i] + self._feedback.sequence[i-1])
             # publish the feedback
             self._as.publish_feedback(self._feedback)
-            # this step is not necessary, the sequence is computed at 1 Hz for demonstration purposes
             r.sleep()
           
         if success:
