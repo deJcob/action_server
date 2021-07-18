@@ -6,7 +6,27 @@ Used with ROS melodic/noetic.
 
 ## Usage
 
-    for future
+Firstly, make sure that your python path is correct 
+
+    #! /usr/bin/env python3
+
+or 
+
+    #! /usr/bin/env python2.7
+
+If not, change it in server files in /src path. Alse remebmer about execut permission 
+
+    chmod +x FrontDockingActionServer.py
+
+To run server you have to run everything normally
+
+    roscore
+
+Then run server by
+
+    source devel/setup.bash
+    rosrun action_server FrontDockingActionServer.py
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
