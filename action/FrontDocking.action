@@ -1,8 +1,17 @@
 #goal definition
-int32 order
+bool useEncoder
+bool usePozyx
+bool useLidar
+bool useRuler
+float32 distToStop
+float32 distToDocking
+float32 velNormal
+float32 velDocking
 ---
 #result definition
-int32[] sequence
+float32 distTraveled
+float32 distToDock
 ---
 #feedback
-int32[] sequence
+float32 distTraveled
+float32 distToDock
