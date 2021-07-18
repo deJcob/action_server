@@ -19,13 +19,23 @@ class FrontDockingAction(object):
         r = rospy.Rate(100)
         success = True
         
-        # append the seeds for the fibonacci sequence
-        self._feedback.sequence = []
-        self._feedback.sequence.append(0)
-        self._feedback.sequence.append(1)
-        
+        # init feedback message
+        self._feedback.distTraveled = 0.0
+
         # publish info to the console for the user
-        rospy.loginfo('%s: Executing, creating fibonacci sequence of order %i with seeds %i, %i' % (self._action_name, goal.order, self._feedback.sequence[0], self._feedback.sequence[1]))
+        start_msg = ''
+        if goal.useEncoder:
+            start_msg += 'encoder, '
+        if goal.usePozyx:
+            start_msg += 'pozyx, '
+        if goal.useLidar:
+            start_msg += 'lidar, '
+        if goal.useRuler:
+            start_msg += 'ruler, '
+
+        rospy.loginfo('%s: Executing, traveling to docking position according to %s by distance %f (%f [m/s])' + 
+            ', docking in %f [m] (v = %f [m/s])', self._action_name, start_msg, goal.distToStop,
+            goal.velNormal, goal.distToDocking, goal.velDocking)
         
         # start executing the action
         for i in range(1, goal.order):
