@@ -15,6 +15,7 @@ add_action_files(
   DIRECTORY action
   FILES 
   FrontDocking.action
+  SideDocking.action
   Distance.action
 )
 

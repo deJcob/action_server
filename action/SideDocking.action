@@ -1,0 +1,13 @@
+#goal definition
+float32 velNormal
+float32 velDocking
+float32 distToStop
+float32 distToDocking
+---
+#result definition
+float32 dockingStationLength
+float32 dockingDistance
+---
+#feedback
+float32 measuredLength
+float32 distToDock
