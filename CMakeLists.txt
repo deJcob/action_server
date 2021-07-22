@@ -13,7 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_action_files(
   DIRECTORY action
-  FILES FrontDocking.action
+  FILES 
+  FrontDocking.action
+  Distance.action
 )
 
 generate_messages(

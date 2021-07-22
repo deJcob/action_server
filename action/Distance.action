@@ -1,0 +1,15 @@
+#goal definition
+bool useEncoder
+bool useLidar
+float32 distToStop
+float32 distToDocking
+float32 velNormal
+float32 velDocking
+---
+#result definition
+float32 distTraveled
+float32 distToDock
+---
+#feedback
+float32 distTraveled
+float32 distToDock
