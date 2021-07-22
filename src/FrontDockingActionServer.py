@@ -8,6 +8,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
 from sensor_msgs.msg import Range
+from sensor_msgs.msg import LaserScan
 
 
 class FrontDockingAction(object):
@@ -21,6 +22,8 @@ class FrontDockingAction(object):
     _range1 = Range()
     _range2 = Range()
     _range3 = Range()
+    _lidarRanges = LaserScan()
+    _lidarRange = float
     _inited = False
 
     def __init__(self, name):
@@ -35,6 +38,7 @@ class FrontDockingAction(object):
             rospy.Subscriber("/robot_driver/laser_ruler/scan_1", Range, self.rulerCallback1)
             rospy.Subscriber("/robot_driver/laser_ruler/scan_2", Range, self.rulerCallback2)
             rospy.Subscriber("/robot_driver/laser_ruler/scan_3", Range, self.rulerCallback3)
+            rospy.Subscriber("/scan", LaserScan, self.lidarCallback)
             self._pub = rospy.Publisher('/diff_drive/cmd_vel', Twist, queue_size=10) 
         except rospy.ROSInterruptException:
             exit
@@ -82,10 +86,14 @@ class FrontDockingAction(object):
                 success = False
                 break
 
+            # TODO: make use of lidar scans
+
             # TODO in future change it to readings from laser ruler (!)
             if (goal.useRuler):
                 countOfSensorsTriggered = int(self._range0 <= goal.distToStop) + int(self._range1 <= goal.distToStop) + int(self._range2 <= goal.distToStop) + int(self._range3 <= goal.distToStop)
                 # if(self._range0 <= goal.distToStop or self._range1 <= goal.distToStop or self._range2 <= goal.distToStop or self._range3 <= goal.distToStop):
+                if(self._lidarRange<=goal.distToDocking):
+                    cmd_vel.linear.x = goal.velDocking
                 if(countOfSensorsTriggered>1):
                     cmd_vel.linear.x = -0.2
                     if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
@@ -142,6 +150,10 @@ class FrontDockingAction(object):
 
     def rulerCallback3(self, data):
         self._range3 = data.range
+
+    def lidarCallback(self, data):
+        self._lidarRanges = data
+        self._lidarRange = data.range[0]
         
 if __name__ == '__main__':
     rospy.init_node('FrontDocking')
