@@ -43,7 +43,7 @@ class FrontDockingAction(object):
         except rospy.ROSInterruptException:
             exit
         rospy.loginfo('%s: Server started!' % self._action_name)
-      
+    
     def execute_cb(self, goal):
         # helper variables
         r = rospy.Rate(100)
@@ -95,16 +95,16 @@ class FrontDockingAction(object):
                 if(self._lidarRange<=goal.distToDocking):
                     cmd_vel.linear.x = goal.velDocking
                 if(countOfSensorsTriggered>1):
-                    cmd_vel.linear.x = -0.2
+                    cmd_vel.linear.x = -1 * goal.velNormal
                     if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+                        cmd_vel.linear.x = 0.0
+                        self._pub.publish(cmd_vel) 
                         success = True
-                        print("distances: ", self._range0, self._range1, self._range2, self._range3)
+                        rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
                 else:
                     countOfSensorsTriggered = int(self._range0 <= goal.distToDocking) + int(self._range1 <= goal.distToDocking) + int(self._range2 <= goal.distToDocking) + int(self._range3 <= goal.distToDocking)
                     if(countOfSensorsTriggered>1):
                         cmd_vel.linear.x = goal.velDocking
-                    else:
-                        cmd_vel.linear.x = goal.velNormal
 
             else:
                 self._feedback.distToDock = goal.distToStop - self._feedback.distTraveled 
