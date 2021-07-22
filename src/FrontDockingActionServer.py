@@ -153,7 +153,7 @@ class FrontDockingAction(object):
 
     def lidarCallback(self, data):
         self._lidarRanges = data
-        self._lidarRange = data.range[0]
+        self._lidarRange = data.ranges[0]
         
 if __name__ == '__main__':
     rospy.init_node('FrontDocking')
