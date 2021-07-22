@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 import rospy
 import actionlib
 import action_server.msg
@@ -7,6 +7,7 @@ import math
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
+from sensor_msgs.msg import Range
 
 
 class FrontDockingAction(object):
@@ -16,6 +17,10 @@ class FrontDockingAction(object):
     _odom = Odometry()
     _start_pos = Odometry()
     _joint_states = JointState()
+    _range0 = Range()
+    _range1 = Range()
+    _range2 = Range()
+    _range3 = Range()
     _inited = False
 
     def __init__(self, name):
@@ -26,6 +31,10 @@ class FrontDockingAction(object):
         try:
             rospy.Subscriber("/diff_drive/odom", Odometry, self.callbackOdom)
             rospy.Subscriber("/joint_states/", JointState, self.callbackJoints)
+            rospy.Subscriber("/robot_driver/laser_ruler/scan_0", Range, self.rulerCallback0)
+            rospy.Subscriber("/robot_driver/laser_ruler/scan_1", Range, self.rulerCallback1)
+            rospy.Subscriber("/robot_driver/laser_ruler/scan_2", Range, self.rulerCallback2)
+            rospy.Subscriber("/robot_driver/laser_ruler/scan_3", Range, self.rulerCallback3)
             self._pub = rospy.Publisher('/diff_drive/cmd_vel', Twist, queue_size=10) 
         except rospy.ROSInterruptException:
             exit
@@ -35,7 +44,7 @@ class FrontDockingAction(object):
         # helper variables
         r = rospy.Rate(100)
         success = False
-        
+
         # init feedback message
         self._feedback.distTraveled = 0.0
         self._start_pos = copy.copy(self._odom)
@@ -74,17 +83,33 @@ class FrontDockingAction(object):
                 break
 
             # TODO in future change it to readings from laser ruler (!)
-            self._feedback.distToDock = goal.distToStop - self._feedback.distTraveled 
-            
-            # Moving in docking zone 
-            if goal.distToStop - self._feedback.distTraveled < goal.distToDocking:
-                cmd_vel.linear.x = goal.velDocking
+            if (goal.useRuler):
+                countOfSensorsTriggered = int(self._range0 <= goal.distToStop) + int(self._range1 <= goal.distToStop) + int(self._range2 <= goal.distToStop) + int(self._range3 <= goal.distToStop)
+                # if(self._range0 <= goal.distToStop or self._range1 <= goal.distToStop or self._range2 <= goal.distToStop or self._range3 <= goal.distToStop):
+                if(countOfSensorsTriggered>1):
+                    cmd_vel.linear.x = -0.2
+                    if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+                        success = True
+                        print("distances: ", self._range0, self._range1, self._range2, self._range3)
+                else:
+                    countOfSensorsTriggered = int(self._range0 <= goal.distToDocking) + int(self._range1 <= goal.distToDocking) + int(self._range2 <= goal.distToDocking) + int(self._range3 <= goal.distToDocking)
+                    if(countOfSensorsTriggered>1):
+                        cmd_vel.linear.x = goal.velDocking
+                    else:
+                        cmd_vel.linear.x = goal.velNormal
 
-            # brakig zone
-            if goal.distToStop - self._feedback.distTraveled < 0.05:
-                cmd_vel.linear.x = 0.0
-                if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
-                    success = True
+            else:
+                self._feedback.distToDock = goal.distToStop - self._feedback.distTraveled 
+            
+                # Moving in docking zone 
+                if goal.distToStop - self._feedback.distTraveled < goal.distToDocking:
+                    cmd_vel.linear.x = goal.velDocking
+
+                # braking zone
+                if goal.distToStop - self._feedback.distTraveled < 0.05:
+                    cmd_vel.linear.x = 0.0
+                    if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+                        success = True
 
             # publish seted velocity
             self._pub.publish(cmd_vel) 
@@ -105,6 +130,18 @@ class FrontDockingAction(object):
 
     def callbackJoints(self, data):
         self._joint_states = data
+
+    def rulerCallback0(self, data):
+        self._range0 = data.range
+
+    def rulerCallback1(self, data):
+        self._range1 = data.range
+
+    def rulerCallback2(self, data):
+        self._range2 = data.range
+
+    def rulerCallback3(self, data):
+        self._range3 = data.range
         
 if __name__ == '__main__':
     rospy.init_node('FrontDocking')
