@@ -3,6 +3,7 @@ float32 velNormal
 float32 velDocking
 float32 distToStop
 float32 distToDocking
+bool scenario1
 ---
 #result definition
 float32 dockingStationLength
