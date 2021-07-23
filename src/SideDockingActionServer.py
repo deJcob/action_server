@@ -88,7 +88,7 @@ class SideDockingAction(object):
                 if(not self._inited):
                     self._start_pos = copy.copy(self._odom)
                     self._inited = True
-                elif(self._feedback.measuredLength <= 0.5 * self._dockingStationLength):
+                elif(self._feedback.measuredLength < 0.5 * self._dockingStationLength):
                     x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
                     y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
                     self._feedback.measuredLength = math.sqrt(x*x+y*y)
