@@ -24,6 +24,7 @@ class SideDockingAction(object):
     _range3 = Range()
     _lidarRanges = LaserScan()
     _lidarRange = float
+    _dockingStationLength = float
     _inited = False
 
     def __init__(self, name):
@@ -52,6 +53,7 @@ class SideDockingAction(object):
         # init feedback message
         self._feedback.measuredLength = 0.0
         self._start_pos = 0.0
+        self._dockingStationLength =1.0
         #copy.copy(self._odom)
 
         # publish info to the console for the user
@@ -86,17 +88,17 @@ class SideDockingAction(object):
                 if(not self._inited):
                     self._start_pos = copy.copy(self._odom)
                     self._inited = True
-                else:
+                elif(self._feedback.measuredLength <= 0.5 * self._dockingStationLength):
                     x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
                     y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
                     self._feedback.measuredLength = math.sqrt(x*x+y*y)
-
-                cmd_vel.linear.x = -1 * goal.velNormal
-                if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
-                    cmd_vel.linear.x = 0.0
-                    self._pub.publish(cmd_vel) 
-                    success = True
-                    rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
+                else:
+                    cmd_vel.linear.x = -1 * goal.velNormal
+                    if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+                        cmd_vel.linear.x = 0.0
+                        self._pub.publish(cmd_vel) 
+                        success = True
+                        rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
 
                     #TODO: add measuring length and going back after measurement
             self._feedback.distToDock = 0.0
