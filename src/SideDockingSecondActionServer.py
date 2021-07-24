@@ -112,68 +112,72 @@ class SideDockingSecondAction(object):
                 int(self._safetyRange3 <= 0.18)
 
             countOfControlSensorsTriggered = countOfFrontSensorsTriggered
-            
+
             if (countOfSafetySensorsTriggered > 1):
                 cmd_vel.linear.x = 0.0
                 rospy.loginfo("Safety Breaking")
-                success = True
+                if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+                                cmd_vel.linear.x = 0.0
+                                self._pub.publish(cmd_vel) 
+                                success = True
             else:
-            #change if another scenario
                 if(self._goForward):
                     # countOfControlSensorsTriggered = countOfFrontSensorsTriggered
                     cmd_vel.linear.x = goal.velNormal
 
                     if(countOfControlSensorsTriggered>1):
-                        cmd_vel.linear.x = goal.velDocking
+                        # cmd_vel.linear.x = goal.velDocking
+                        cmd_vel.linear.x = goal.velMeasuring
                         if(not self._startMeasuringLength):
                             self._start_pos = copy.copy(self._odom)
                             self._startMeasuringLength = True
                         elif(self._startMeasuringLength):
                             x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
                             y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
-                            rospy.loginfo(self._feedback.measuredLength)
                             self._feedback.measuredLength = math.sqrt(x*x+y*y)
+                            rospy.loginfo(self._feedback.measuredLength)
                             self._feedback.distToDock = 0.5 * self._feedback.measuredLength
-                        else:
-                            # no breaking
+                    elif(self._feedback.measuredLength>0.20):
+                        # braking
+                        # cmd_vel.linear.x = 0.0
+                        rospy.loginfo("hamowansko przod")
+
+                        #counter-current breaking
+                        cmd_vel.linear.x = -1 * goal.velDocking
+
+                        if self._joint_states.velocity[0] <= 0 and self._joint_states.velocity[1] <= 0:
                             cmd_vel.linear.x = 0.0
-
-                            #counter-current breaking
-                            #cmd_vel.linear.x = -1 * goal.velDocking
-
-                            if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
-                                cmd_vel.linear.x = 0.0
-                                self._pub.publish(cmd_vel) 
-                                self._goForward = False
-                                rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
+                            self._pub.publish(cmd_vel) 
+                            rospy.loginfo("hamowansko przod koniec")
+                            self._goForward = False
+                            rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
                 else:
                 #goBack
                     cmd_vel.linear.x = -1 * goal.velDocking
 
-                    # if(countOfControlSensorsTriggered>1):
                     if(countOfControlSensorsTriggered>1):
-                        # cmd_vel.linear.x = -1 * goal.velDocking
                         if(not self._startGoingBack):
                             self._start_pos_of_back = copy.copy(self._odom)
                             self._startGoingBack = True
                         elif(self._startMeasuringLength and self._distanceTraveledBackward < 0.5 * self._feedback.measuredLength):
                             x = abs(self._start_pos_of_back.pose.pose.position.x - self._odom.pose.pose.position.x)
                             y = abs(self._start_pos_of_back.pose.pose.position.y - self._odom.pose.pose.position.y)
-                            rospy.loginfo(self._feedback.measuredLength)
+                            rospy.loginfo(self._feedback.distToDock)
                             self._distanceTraveledBackward = math.sqrt(x*x+y*y)
                             self._feedback.distToDock = 0.5 * self._feedback.measuredLength - self._distanceTraveledBackward
                         else:
-                            # no breaking
-                            cmd_vel.linear.x = 0.0
-
+                            # braking
+                            # cmd_vel.linear.x = 0.0
+                            rospy.loginfo("hamowansko tyl")
                             #counter-current breaking
-                            #cmd_vel.linear.x = -1 * goal.velDocking
+                            cmd_vel.linear.x = goal.velDocking
 
                             if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
                                 cmd_vel.linear.x = 0.0
                                 self._pub.publish(cmd_vel) 
+                                rospy.loginfo("hamowansko tyl FEEEEEEEEEEEEEEEEST")
                                 success = True
-                                rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
+                                # rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
 
 
 

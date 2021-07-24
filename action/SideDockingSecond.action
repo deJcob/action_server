@@ -1,6 +1,7 @@
 #goal definition
 float32 velNormal
 float32 velDocking
+float32 velMeasuring
 float32 distToStop
 ---
 #result definition
