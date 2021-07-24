@@ -12,8 +12,8 @@ from sensor_msgs.msg import LaserScan
 
 class DistanceAction(object):
     # create messages that are used to publish feedback/result
-    _feedback = action_server.msg.DistanceActionFeedback()
-    _result = action_server.msg.DistanceActionResult()
+    _feedback = action_server.msg.DistanceFeedback()
+    _result = action_server.msg.DistanceResult()
     _odom = Odometry()
     _start_pos = Odometry()
     _joint_states = JointState()

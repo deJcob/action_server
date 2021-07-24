@@ -54,7 +54,6 @@ class SideDockingAction(object):
 
         # init feedback message
         self._feedback.measuredLength = 0.0
-        self._start_pos = 0.0
         self._dockingStationLength =1.0
         #copy.copy(self._odom)
 
@@ -84,61 +83,68 @@ class SideDockingAction(object):
 
             #TODO: add measuring length
             countOfSensorsTriggered = int(self._range0 <= goal.distToStop) + int(self._range1 <= goal.distToStop) + int(self._range2 <= goal.distToStop) + int(self._range3 <= goal.distToStop)
+            countOfFrontSensorsTriggered = int(self._range0 <= goal.distToStop) + int(self._range1 <= goal.distToStop)
             if(goal.scenario1):
-                if(self._lidarRange<=goal.distToDocking):
-                    cmd_vel.linear.x = goal.velDocking
+                # if(self._lidarRange<=goal.distToDocking):
+            
+                # cmd_vel.linear.x = goal.velDocking
                 if(countOfSensorsTriggered>1):
+                    cmd_vel.linear.x = goal.velDocking
+
                     if(not self._startMeasuringLength):
                         self._start_pos = copy.copy(self._odom)
                         self._startMeasuringLength = True
                     elif(self._feedback.measuredLength < 0.5 * self._dockingStationLength):
                         x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
                         y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
+                        rospy.loginfo(self._feedback.measuredLength)
                         self._feedback.measuredLength = math.sqrt(x*x+y*y)
                     else:
-                        cmd_vel.linear.x = -1 * goal.velNormal
+                        # cmd_vel.linear.x = 0.0
+
+                        cmd_vel.linear.x = -1 * goal.velDocking
                         if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
                             cmd_vel.linear.x = 0.0
                             self._pub.publish(cmd_vel) 
                             success = True
                             rospy.loginfo("Ruler distances: %f, %f, %f, %f", self._range0, self._range1, self._range2, self._range3)
-            else:
-                countOfFrontSensorsTriggered = int(self._range0 <= goal.distToStop and self._range0 > 0.01) + int(self._range1 <= goal.distToStop and self._range1 > 0.01)
-                if(self._goForward):
-                    if(self._lidarRange<=goal.distToDocking):
-                        cmd_vel.linear.x = goal.velDocking
-                    if(countOfFrontSensorsTriggered>=1):
-                        if(not self._startMeasuringLength):
-                            self._start_pos = copy.copy(self._odom)
-                            self._startMeasuringLength = True
-                        else:
-                            x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
-                            y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
-                            self._feedback.measuredLength = math.sqrt(x*x+y*y)
-                    else:
-                        #measured distance
-                        if(not self._measuredLength):
-                            self._feedback.distToDock = self._feedback.measuredLength * 0.5
-                            self._start_pos = copy.copy(self._odom)
-                            self._measuredLength = True
-                        else:
-                            cmd_vel.linear.x = -1 * goal.velDocking
-                            if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
-                                cmd_vel.linear.x = 0.0
-                                self._pub.publish(cmd_vel) 
-                                self._goForward = False
+            # elif(not goal.scenario1):
+            #     countOfFrontSensorsTriggered = int(self._range0 <= goal.distToStop and self._range0 > 0.01) + int(self._range1 <= goal.distToStop and self._range1 > 0.01)
+            #     if(self._goForward):
+            #         if(self._lidarRange<=goal.distToDocking):
+            #             cmd_vel.linear.x = goal.velDocking
+            #         if(countOfFrontSensorsTriggered>=1):
+            #             if(not self._startMeasuringLength):
+            #                 self._start_pos = copy.copy(self._odom)
+            #                 self._startMeasuringLength = True
+            #             else:
+            #                 x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
+            #                 y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
+            #                 self._feedback.measuredLength = math.sqrt(x*x+y*y)
+            #         else:
+            #             #measured distance
+            #             if(not self._measuredLength):
+            #                 self._feedback.distToDock = self._feedback.measuredLength * 0.5
+            #                 self._start_pos = copy.copy(self._odom)
+            #                 self._measuredLength = True
+            #             else:
+            #                 cmd_vel.linear.x = -1 * goal.velDocking
+            #                 if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+            #                     cmd_vel.linear.x = 0.0
+            #                     self._pub.publish(cmd_vel) 
+            #                     self._goForward = False
 
-                else:
-                    cmd_vel.linear.x = -1 * goal.velDocking
-                    x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
-                    y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
-                    if(math.sqrt(x*x+y*y)<=self._feedback.distToDock):
-                        cmd_vel.linear.x = goal.velDocking
-                        if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
-                            cmd_vel.linear.x = 0.0
-                            self._result.dockingDistance = math.sqrt(x*x+y*y)
-                            success = True
-                            self._pub.publish(cmd_vel)
+            #     else:
+            #         cmd_vel.linear.x = -1 * goal.velDocking
+            #         x = abs(self._start_pos.pose.pose.position.x - self._odom.pose.pose.position.x)
+            #         y = abs(self._start_pos.pose.pose.position.y - self._odom.pose.pose.position.y)
+            #         if(math.sqrt(x*x+y*y)<=self._feedback.distToDock):
+            #             cmd_vel.linear.x = goal.velDocking
+            #             if self._joint_states.velocity[0] == 0 and self._joint_states.velocity[1] == 0:
+            #                 cmd_vel.linear.x = 0.0
+            #                 self._result.dockingDistance = math.sqrt(x*x+y*y)
+            #                 success = True
+            #                 self._pub.publish(cmd_vel)
 
             # publish seted velocity
             self._pub.publish(cmd_vel) 
